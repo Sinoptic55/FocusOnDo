@@ -1,0 +1,19 @@
+{
+  "name": "pomodoro-tms-frontend",
+  "version": "1.0.0",
+  "description": "Pomodoro Task Management System - Frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.js --watch",
+    "build": "node esbuild.config.js",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "esbuild": "^0.19.0",
+    "@types/node": "^20.10.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.1"
+  }
+}

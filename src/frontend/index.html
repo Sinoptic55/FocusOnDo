@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro TMS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header id="header">
+            <div class="header-content">
+                <div class="logo">Pomodoro TMS</div>
+                <nav id="main-nav">
+                    <a href="#tasks" data-view="tasks">Задачи</a>
+                    <a href="#analytics" data-view="analytics">Аналитика</a>
+                    <a href="#settings" data-view="settings">Настройки</a>
+                </nav>
+                <div class="user-menu">
+                    <span id="user-name"></span>
+                    <button id="logout-btn">Выйти</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content area -->
+        <main id="main-content">
+            <!-- Views will be rendered here -->
+            <div id="view-container"></div>
+
+            <!-- Login page -->
+            <div id="login-page" class="page hidden">
+                <div class="auth-container">
+                    <h1>Вход</h1>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="login-username">Имя пользователя</label>
+                            <input type="text" id="login-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Пароль</label>
+                            <input type="password" id="login-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Войти</button>
+                    </form>
+                    <p class="auth-link">Нет аккаунта? <a href="#register">Зарегистрироваться</a></p>
+                </div>
+            </div>
+
+            <!-- Register page -->
+            <div id="register-page" class="page hidden">
+                <div class="auth-container">
+                    <h1>Регистрация</h1>
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label for="register-username">Имя пользователя</label>
+                            <input type="text" id="register-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email</label>
+                            <input type="email" id="register-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Пароль</label>
+                            <input type="password" id="register-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                    </form>
+                    <p class="auth-link">Уже есть аккаунт? <a href="#login">Войти</a></p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Timer footer (always visible) -->
+        <footer id="timer-footer">
+            <div class="timer-container">
+                <div class="timer-display">
+                    <span id="timer-time">25:00</span>
+                    <span id="timer-type" class="timer-type">Работа</span>
+                </div>
+                <div class="timer-controls">
+                    <button id="timer-start-btn" class="btn btn-primary">Старт</button>
+                    <button id="timer-pause-btn" class="btn btn-secondary hidden">Пауза</button>
+                    <button id="timer-skip-btn" class="btn btn-tertiary">Пропустить</button>
+                </div>
+                <div class="timer-task">
+                    <span id="timer-task-label">Задача: </span>
+                    <span id="timer-task-name">Не выбрана</span>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Toast notifications -->
+        <div id="toast-container"></div>
+
+        <!-- Dialogs -->
+        <div id="dialog-overlay" class="overlay hidden">
+            <div id="dialog-container" class="dialog"></div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
