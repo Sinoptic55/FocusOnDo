@@ -99,7 +99,9 @@ export class AnalyticsView extends Component<AnalyticsViewState> {
           </div>
           <div class="date-inputs">
             <input type="date" id="start-date" value="${this.state.startDate}">
+            <input type="date" id="start-date" value="${this.state.startDate}">
             <span>—</span>
+            <input type="date" id="end-date" value="${this.state.endDate}">
             <input type="date" id="end-date" value="${this.state.endDate}">
             <button class="btn btn-primary btn-sm" id="apply-dates">Применить</button>
           </div>
