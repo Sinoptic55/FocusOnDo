@@ -267,7 +267,7 @@ export class TimerManager {
       this.postWorkDialog = new PostWorkDialog({
         taskTitle: this.state.currentTask.title,
         onSubmit: async (result) => {
-          await this.saveSegment(false, result);
+          await this.saveSegment(result);
           showSuccess('Интервал завершен!');
           
           if (result.stuck) {

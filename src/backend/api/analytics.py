@@ -1,10 +1,11 @@
 """
 Analytics API endpoints.
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date, datetime
+import io
 
 from db.database import get_db
 from models.time_segment import TimeSegment
@@ -12,10 +13,16 @@ from models.task import Task
 from models.project import Project
 from models.client import Client
 from models.task_status import TaskStatus
+from models.task_list import TaskList
 from auth.dependencies import get_current_user
 from models.user import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
+
+# ODS generation
+from odf.opendocument import OpenDocumentSpreadsheet
+from odf.table import Table, TableRow, TableCell
+from odf.text import P
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
@@ -71,6 +78,22 @@ class DashboardResponse(BaseModel):
     total_time_actual: int
     total_time_billed: int
     today_time_actual: int
+
+
+class UnpaidTaskResponse(BaseModel):
+    """Response schema for a single unpaid task in the report."""
+    task_id: int
+    task_title: str
+    end_date: Optional[datetime]  # Max start_time of time segments
+    actual_time_minutes: int  # Sum of actual_time_seconds / 60
+    billed_time_minutes: int  # Sum of billed_time_seconds / 60
+
+
+class UnpaidTasksFilter(BaseModel):
+    """Filter parameters for unpaid tasks report."""
+    project_id: Optional[int] = None
+    client_id: Optional[int] = None
+    list_id: Optional[int] = None
 
 
 @router.get("/projects", response_model=List[ProjectTimeResponse])
@@ -393,4 +416,213 @@ async def get_dashboard(
         total_time_actual=total_time_actual,
         total_time_billed=total_time_billed,
         today_time_actual=today_time_actual
+    )
+
+
+@router.get("/unpaid-tasks", response_model=List[UnpaidTaskResponse])
+async def get_unpaid_tasks(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    project_id: Optional[int] = None,
+    client_id: Optional[int] = None,
+    list_id: Optional[int] = None
+):
+    """
+    Get unpaid completed tasks with aggregated time data.
+    
+    Returns tasks where is_completed=true and is_paid=false,
+    with aggregated actual and billed time from time segments.
+    Only parent tasks (parent_task_id IS NULL) are returned,
+    with time from subtasks aggregated.
+    """
+    # Step 1: Get all unpaid parent tasks
+    parent_query = (
+        select(Task)
+        .where(
+            Task.user_id == current_user.id,
+            Task.is_completed == True,
+            Task.is_paid == False,
+            Task.parent_task_id.is_(None)
+        )
+    )
+
+    # Apply filters
+    if project_id:
+        parent_query = parent_query.where(Task.project_id == project_id)
+    if client_id:
+        parent_query = parent_query.where(Task.client_id == client_id)
+    if list_id:
+        parent_query = parent_query.where(Task.list_id == list_id)
+
+    parent_result = await db.execute(parent_query)
+    parent_tasks = parent_result.scalars().all()
+
+    if not parent_tasks:
+        return []
+
+    parent_ids = [t.id for t in parent_tasks]
+    parent_map = {t.id: t for t in parent_tasks}
+
+    # Step 2: Get all time segments for these tasks and their subtasks
+    segments_query = (
+        select(
+            TimeSegment.task_id,
+            TimeSegment.actual_time_seconds,
+            TimeSegment.billed_time_seconds,
+            TimeSegment.start_time
+        )
+        .where(
+            TimeSegment.user_id == current_user.id,
+            # Get segments for parent tasks or their subtasks
+            TimeSegment.task_id.in_(
+                select(Task.id).where(
+                    Task.user_id == current_user.id,
+                    (Task.id.in_(parent_ids)) | (Task.parent_task_id.in_(parent_ids))
+                )
+            )
+        )
+    )
+
+    segments_result = await db.execute(segments_query)
+    segments = segments_result.all()
+
+    # Step 3: Map segments to parent tasks
+    # For subtask segments, find the parent
+    task_to_parent = {}
+    subtasks_result = await db.execute(
+        select(Task.id, Task.parent_task_id).where(
+            Task.user_id == current_user.id,
+            Task.parent_task_id.in_(parent_ids)
+        )
+    )
+    for row in subtasks_result.all():
+        task_to_parent[row.id] = row.parent_task_id
+
+    # Aggregate by parent task
+    aggregation = {}
+    for seg in segments:
+        task_id = seg.task_id
+        parent_id = task_to_parent.get(task_id, task_id)  # If subtask, use parent; else use itself
+
+        if parent_id not in parent_map:
+            continue
+
+        if parent_id not in aggregation:
+            aggregation[parent_id] = {
+                "actual": 0,
+                "billed": 0,
+                "max_start": None
+            }
+
+        aggregation[parent_id]["actual"] += seg.actual_time_seconds
+        aggregation[parent_id]["billed"] += seg.billed_time_seconds
+        if seg.start_time:
+            if aggregation[parent_id]["max_start"] is None or seg.start_time > aggregation[parent_id]["max_start"]:
+                aggregation[parent_id]["max_start"] = seg.start_time
+
+    # Step 4: Build response
+    unpaid_tasks = []
+    for parent_id, parent_task in parent_map.items():
+        agg = aggregation.get(parent_id, {"actual": 0, "billed": 0, "max_start": None})
+
+        unpaid_tasks.append(UnpaidTaskResponse(
+            task_id=parent_id,
+            task_title=parent_task.title,
+            end_date=agg["max_start"],
+            actual_time_minutes=agg["actual"] // 60,
+            billed_time_minutes=agg["billed"] // 60
+        ))
+
+    return unpaid_tasks
+
+
+def _add_text_cell(table, text: str):
+    """Add a text cell to an ODS table."""
+    row = TableRow()
+    cell = TableCell()
+    cell.addElement(P(text=str(text)))
+    row.addElement(cell)
+    table.addElement(row)
+
+
+def _generate_unpaid_tasks_ods(unpaid_tasks: List[UnpaidTaskResponse]) -> bytes:
+    """
+    Generate ODS file content for unpaid tasks report.
+    
+    Columns: Задача, Дата окончания, Продолжительность (мин), Продолжительность к оплате (мин)
+    """
+    doc = OpenDocumentSpreadsheet()
+    table = Table(name="Неоплаченные задачи")
+
+    # Header row
+    headers = ["Задача", "Дата окончания", "Продолжительность (мин)", "Продолжительность к оплате (мин)"]
+    header_row = TableRow()
+    for header in headers:
+        cell = TableCell()
+        cell.addElement(P(text=header))
+        header_row.addElement(cell)
+    table.addElement(header_row)
+
+    # Data rows
+    for task in unpaid_tasks:
+        row = TableRow()
+        
+        # Task title
+        cell = TableCell()
+        cell.addElement(P(text=task.task_title))
+        row.addElement(cell)
+        
+        # End date
+        end_date_str = task.end_date.strftime("%Y-%m-%d %H:%M") if task.end_date else ""
+        cell = TableCell()
+        cell.addElement(P(text=end_date_str))
+        row.addElement(cell)
+        
+        # Actual time minutes
+        cell = TableCell()
+        cell.addElement(P(text=str(task.actual_time_minutes)))
+        row.addElement(cell)
+        
+        # Billed time minutes
+        cell = TableCell()
+        cell.addElement(P(text=str(task.billed_time_minutes)))
+        row.addElement(cell)
+        
+        table.addElement(row)
+
+    doc.spreadsheet.addElement(table)
+    
+    # Write to bytes
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    return buffer.getvalue()
+
+
+@router.get("/unpaid-tasks/export")
+async def export_unpaid_tasks_ods(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    project_id: Optional[int] = None,
+    client_id: Optional[int] = None,
+    list_id: Optional[int] = None
+):
+    """
+    Export unpaid tasks report as ODS file.
+    """
+    # Get the same data as the JSON endpoint
+    unpaid_tasks = await get_unpaid_tasks(
+        current_user=current_user,
+        db=db,
+        project_id=project_id,
+        client_id=client_id,
+        list_id=list_id
+    )
+
+    # Generate ODS
+    ods_content = _generate_unpaid_tasks_ods(unpaid_tasks)
+
+    return Response(
+        content=ods_content,
+        media_type="application/vnd.oasis.opendocument.spreadsheet",
+        headers={"Content-Disposition": "attachment; filename=unpaid_tasks.ods"}
     )

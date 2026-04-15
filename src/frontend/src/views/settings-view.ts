@@ -233,6 +233,7 @@ export class SettingsView extends Component<SettingsViewState> {
       <p class="text-muted">Перетащите для изменения порядка</p>
       <form id="add-status-form" class="add-form">
         <input type="text" name="name" placeholder="Новый статус" required>
+        <input type="color" name="color" value="#808080">
         <label><input type="checkbox" name="board_visible" checked> На доске</label>
         <button type="submit" class="btn btn-primary">Добавить</button>
       </form>
@@ -240,6 +241,7 @@ export class SettingsView extends Component<SettingsViewState> {
         ${this.state.statuses.map(status => `
           <div class="ref-item sortable-item" draggable="true" data-id="${status.id}">
             <span class="drag-handle">☰</span>
+            <input type="color" value="${status.color || '#808080'}" class="status-color-picker" data-id="${status.id}">
             <input type="text" value="${escapeHtml(status.name)}" class="status-name-input" data-id="${status.id}">
             <label class="toggle-label" title="Показывать на доске">
               <input type="checkbox" class="status-visible-toggle" data-id="${status.id}" ${status.board_visible ? 'checked' : ''}>
@@ -407,7 +409,7 @@ export class SettingsView extends Component<SettingsViewState> {
         if (newSettings.theme) {
           localStorage.setItem('app-theme', newSettings.theme);
           if (newSettings.theme !== 'auto') {
-            document.body.classList.add(`theme-\${newSettings.theme}`);
+            document.body.classList.add(`theme-${newSettings.theme}`);
           }
         }
 
@@ -482,24 +484,39 @@ export class SettingsView extends Component<SettingsViewState> {
       try {
         await api.createStatus({ 
           name: fd.get('name') as string, 
+          color: fd.get('color') as string,
           board_visible: fd.get('board_visible') === 'on',
           order: this.state.statuses.length
         });
         this.loadData();
-      } catch (err) {}
+      } catch (err) {
+        showError('Ошибка добавления статуса');
+      }
     });
 
-    this.element.querySelectorAll('.status-name-input').forEach(input => {
+    this.element.querySelectorAll('.status-name-input, .status-color-picker').forEach(input => {
       input.addEventListener('change', async (e) => {
         const target = e.target as HTMLInputElement;
-        await api.updateStatus(parseInt(target.dataset.id!), { name: target.value });
+        const id = parseInt(target.dataset.id!);
+        const isColor = target.classList.contains('status-color-picker');
+        try {
+          await api.updateStatus(id, isColor ? { color: target.value } : { name: target.value });
+          showSuccess('Статус обновлен');
+        } catch (err) {
+          showError('Ошибка обновления статуса');
+        }
       });
     });
 
     this.element.querySelectorAll('.status-visible-toggle').forEach(input => {
       input.addEventListener('change', async (e) => {
         const target = e.target as HTMLInputElement;
-        await api.updateStatus(parseInt(target.dataset.id!), { board_visible: target.checked });
+        try {
+          await api.updateStatus(parseInt(target.dataset.id!), { board_visible: target.checked });
+          showSuccess('Видимость статуса обновлена');
+        } catch (err) {
+          showError('Ошибка обновления видимости');
+        }
       });
     });
 

@@ -16,6 +16,8 @@ interface ListViewState {
   clients: Client[];
   loading: boolean;
   sortBy: 'none' | 'deadline' | 'priority';
+  showCompleted: boolean;
+  showPaid: boolean;
 }
 
 interface ListViewProps {
@@ -35,7 +37,9 @@ export class ListView extends Component<ListViewState, ListViewProps> {
       projects: [],
       clients: [],
       loading: true,
-      sortBy: 'none'
+      sortBy: 'none',
+      showCompleted: false,
+      showPaid: false
     });
   }
 
@@ -73,14 +77,26 @@ export class ListView extends Component<ListViewState, ListViewProps> {
 
     this.element.innerHTML = `
       <div class="view-controls">
-        <label>
-          Сортировка:
-          <select id="sort-select">
-            <option value="none" \${this.state.sortBy === 'none' ? 'selected' : ''}>По умолчанию</option>
-            <option value="deadline" \${this.state.sortBy === 'deadline' ? 'selected' : ''}>По дедлайну</option>
-            <option value="priority" \${this.state.sortBy === 'priority' ? 'selected' : ''}>По приоритету</option>
-          </select>
-        </label>
+        <div class="controls-group">
+          <label>
+            Сортировка:
+            <select id="sort-select">
+              <option value="none" ${this.state.sortBy === 'none' ? 'selected' : ''}>По умолчанию</option>
+              <option value="deadline" ${this.state.sortBy === 'deadline' ? 'selected' : ''}>По дедлайну</option>
+              <option value="priority" ${this.state.sortBy === 'priority' ? 'selected' : ''}>По приоритету</option>
+            </select>
+          </label>
+        </div>
+        <div class="controls-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-show-completed" ${this.state.showCompleted ? 'checked' : ''}>
+            Показывать выполненные
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-show-paid" ${this.state.showPaid ? 'checked' : ''}>
+            Показывать оплаченные
+          </label>
+        </div>
       </div>
       <div id="lists-container" class="lists-container"></div>
     `;
@@ -92,6 +108,14 @@ export class ListView extends Component<ListViewState, ListViewProps> {
   private setupEventListeners(): void {
     this.element.querySelector('#sort-select')?.addEventListener('change', (e) => {
       this.setState({ sortBy: (e.target as HTMLSelectElement).value as any });
+    });
+
+    this.element.querySelector('#check-show-completed')?.addEventListener('change', (e) => {
+      this.setState({ showCompleted: (e.target as HTMLInputElement).checked });
+    });
+
+    this.element.querySelector('#check-show-paid')?.addEventListener('change', (e) => {
+      this.setState({ showPaid: (e.target as HTMLInputElement).checked });
     });
   }
 
@@ -105,8 +129,16 @@ export class ListView extends Component<ListViewState, ListViewProps> {
     container.innerHTML = '';
 
     const tasksByList = new Map<number, Task[]>();
+    
+    // Filter tasks based on state
+    const filteredTasks = this.state.tasks.filter(task => {
+      if (!this.state.showCompleted && task.is_completed) return false;
+      if (!this.state.showPaid && task.is_paid) return false;
+      return true;
+    });
+
     // Filter root tasks
-    const rootTasks = this.state.tasks.filter(t => !t.parent_task_id);
+    const rootTasks = filteredTasks.filter(t => !t.parent_task_id);
 
     rootTasks.forEach(task => {
       const listId = task.list_id || 0; // 0 for Uncategorized
@@ -132,15 +164,17 @@ export class ListView extends Component<ListViewState, ListViewProps> {
       section.className = 'list-section';
       section.innerHTML = `
         <div class="list-header" style="border-left-color: ${list.color}">
-          <h3 style="color: ${list.color}">${list.name}</h3>
-          <span class="list-count">${listTasks.length}</span>
+          <div class="list-title-group">
+            <h3 style="color: ${list.color}">${list.name}</h3>
+            <span class="list-count-badge">${listTasks.length}</span>
+          </div>
         </div>
         <div class="list-tasks"></div>
       `;
 
       const tasksContainer = section.querySelector('.list-tasks') as HTMLElement;
       listTasks.forEach(task => {
-        this.renderTaskTree(task, tasksContainer, 0);
+        this.renderTaskTree(task, tasksContainer, 0, filteredTasks);
       });
 
       container.appendChild(section);
@@ -151,7 +185,7 @@ export class ListView extends Component<ListViewState, ListViewProps> {
     }
   }
 
-  private renderTaskTree(task: Task, container: HTMLElement, level: number): void {
+  private renderTaskTree(task: Task, container: HTMLElement, level: number, allFilteredTasks: Task[]): void {
     const card = new TaskCard({
       task,
       lists: this.state.lists,
@@ -166,10 +200,10 @@ export class ListView extends Component<ListViewState, ListViewProps> {
     this.taskCards.push(card);
 
     // Find and render subtasks
-    const subtasks = this.state.tasks.filter(t => t.parent_task_id === task.id);
+    const subtasks = allFilteredTasks.filter(t => t.parent_task_id === task.id);
     if (subtasks.length > 0) {
       const sortedSubtasks = this.sortTasks(subtasks);
-      sortedSubtasks.forEach(st => this.renderTaskTree(st, container, level + 1));
+      sortedSubtasks.forEach(st => this.renderTaskTree(st, container, level + 1, allFilteredTasks));
     }
   }
 

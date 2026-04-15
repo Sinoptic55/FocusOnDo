@@ -6,9 +6,10 @@ import { Component } from '../components/component';
 import { api } from '../api';
 import { formatTime, showError } from '../utils';
 import type { AnalyticsData } from '../models';
+import { UnpaidTasksReport } from '../components/unpaid-tasks-report';
 
 interface AnalyticsViewState {
-  activeReport: 'dashboard' | 'projects' | 'clients' | 'productivity' | 'estimation' | 'speed' | 'stuck';
+  activeReport: 'dashboard' | 'projects' | 'clients' | 'productivity' | 'estimation' | 'speed' | 'stuck' | 'unpaid';
   startDate: string;
   endDate: string;
   data: AnalyticsData | null;
@@ -97,22 +98,23 @@ export class AnalyticsView extends Component<AnalyticsViewState> {
             <button class="btn btn-sm preset-btn active" data-preset="month">Месяц</button>
           </div>
           <div class="date-inputs">
-            <input type="date" id="start-date" value="\${this.state.startDate}">
+            <input type="date" id="start-date" value="${this.state.startDate}">
             <span>—</span>
-            <input type="date" id="end-date" value="\${this.state.endDate}">
+            <input type="date" id="end-date" value="${this.state.endDate}">
             <button class="btn btn-primary btn-sm" id="apply-dates">Применить</button>
           </div>
         </div>
       </div>
 
       <div class="report-tabs mt-md mb-md">
-        <button class="btn \${this.state.activeReport === 'dashboard' ? 'btn-primary' : 'btn-secondary'}" data-report="dashboard">Обзор</button>
-        <button class="btn \${this.state.activeReport === 'projects' ? 'btn-primary' : 'btn-secondary'}" data-report="projects">Проекты</button>
-        <button class="btn \${this.state.activeReport === 'clients' ? 'btn-primary' : 'btn-secondary'}" data-report="clients">Клиенты</button>
-        <button class="btn \${this.state.activeReport === 'productivity' ? 'btn-primary' : 'btn-secondary'}" data-report="productivity">Пики продуктивности</button>
-        <button class="btn \${this.state.activeReport === 'estimation' ? 'btn-primary' : 'btn-secondary'}" data-report="estimation">Оценки</button>
-        <button class="btn \${this.state.activeReport === 'speed' ? 'btn-primary' : 'btn-secondary'}" data-report="speed">Скорость работы</button>
-        <button class="btn \${this.state.activeReport === 'stuck' ? 'btn-primary' : 'btn-secondary'}" data-report="stuck">Застревания</button>
+        <button class="btn ${this.state.activeReport === 'dashboard' ? 'btn-primary' : 'btn-secondary'}" data-report="dashboard">Обзор</button>
+        <button class="btn ${this.state.activeReport === 'projects' ? 'btn-primary' : 'btn-secondary'}" data-report="projects">Проекты</button>
+        <button class="btn ${this.state.activeReport === 'clients' ? 'btn-primary' : 'btn-secondary'}" data-report="clients">Клиенты</button>
+        <button class="btn ${this.state.activeReport === 'unpaid' ? 'btn-primary' : 'btn-secondary'}" data-report="unpaid">Неоплаченные</button>
+        <button class="btn ${this.state.activeReport === 'productivity' ? 'btn-primary' : 'btn-secondary'}" data-report="productivity">Пики продуктивности</button>
+        <button class="btn ${this.state.activeReport === 'estimation' ? 'btn-primary' : 'btn-secondary'}" data-report="estimation">Оценки</button>
+        <button class="btn ${this.state.activeReport === 'speed' ? 'btn-primary' : 'btn-secondary'}" data-report="speed">Скорость работы</button>
+        <button class="btn ${this.state.activeReport === 'stuck' ? 'btn-primary' : 'btn-secondary'}" data-report="stuck">Застревания</button>
       </div>
 
       <div id="report-content" class="report-content"></div>
@@ -162,13 +164,20 @@ export class AnalyticsView extends Component<AnalyticsViewState> {
     });
   }
 
+  private unpaidReport: UnpaidTasksReport | null = null;
+
   private renderActiveReport(): void {
     this.destroyCharts();
     const container = this.element.querySelector('#report-content');
-    if (!container || !this.state.data) return;
+    if (!container) return;
 
-    // Placeholder data generation based on what we would expect from models
-    // Since API might return empty arrays, let's supply mocked data for charts to demonstrate requirements.
+    // Unpaid report doesn't need data from analytics API
+    if (this.state.activeReport === 'unpaid') {
+      this.renderUnpaid(container as HTMLElement);
+      return;
+    }
+
+    if (!this.state.data) return;
 
     switch (this.state.activeReport) {
       case 'dashboard':
@@ -192,6 +201,18 @@ export class AnalyticsView extends Component<AnalyticsViewState> {
       case 'stuck':
         this.renderStuck(container as HTMLElement);
         break;
+    }
+  }
+
+  private renderUnpaid(container: HTMLElement): void {
+    if (!this.unpaidReport) {
+      this.unpaidReport = new UnpaidTasksReport();
+    }
+    container.innerHTML = '';
+    const el = this.unpaidReport.getElement();
+    if (el) {
+      container.appendChild(el);
+      this.unpaidReport.refresh();
     }
   }
 

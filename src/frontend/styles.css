@@ -548,7 +548,7 @@ body {
    ============================================ */
 
 .task-card {
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
@@ -564,8 +564,8 @@ body {
 
 .task-card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--spacing-xs);
   margin-bottom: var(--spacing-sm);
 }
 
@@ -573,13 +573,14 @@ body {
   font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-text-primary);
-  flex: 1;
+  margin: 0;
 }
 
 .task-card-meta {
   display: flex;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
+  margin-bottom: 2px;
 }
 
 .task-card-description {
@@ -619,89 +620,6 @@ body {
 
 .task-overdue {
   border-left: 3px solid var(--color-overdue);
-}
-
-/* ============================================
-   Dialogs / Modals
-   ============================================ */
-
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  opacity: 0;
-  transition: opacity var(--transition-normal);
-}
-
-.overlay:not(.hidden) {
-  opacity: 1;
-}
-
-.overlay.hidden {
-  pointer-events: none;
-}
-
-.dialog {
-  background-color: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.dialog-header h2,
-.dialog-header h3 {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.dialog-close {
-  background: transparent;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  padding: var(--spacing-xs);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-}
-
-.dialog-close:hover {
-  background-color: var(--color-bg-tertiary);
-  color: var(--color-primary);
-}
-
-.dialog-body {
-  padding: var(--spacing-lg);
-  max-height: calc(90vh - 150px);
-  overflow-y: auto;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  border-top: 1px solid var(--color-border-light);
 }
 
 /* ============================================
@@ -1794,6 +1712,56 @@ kbd {
 }
 
 /* ============================================
+   List View
+   ============================================ */
+
+.list-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid transparent;
+  padding-left: var(--spacing-md);
+}
+
+.list-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.list-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.list-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+}
+
+.list-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ============================================
    Empty States
    ============================================ */
 
@@ -1927,6 +1895,7 @@ kbd {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .column-header h3 {
@@ -2070,6 +2039,194 @@ kbd {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* ============================================
+   Time Segments Editor Dialog
+   ============================================ */
+
+.section-header-with-action {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.btn-time-segments {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-lg);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-text-secondary);
+}
+
+.btn-time-segments:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.time-segments-editor-dialog {
+  max-width: 900px;
+}
+
+.ts-editor-summary {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.ts-editor-summary strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.ts-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ts-editor-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.ts-editor-table-container .data-table {
+  margin: 0;
+}
+
+.ts-editor-table-container .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--color-bg-tertiary);
+}
+
+.add-segment-form {
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.add-segment-form h4 {
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.ts-editing-row td {
+  background-color: var(--color-bg-secondary);
+}
+
+.text-success {
+  color: var(--color-success) !important;
+}
+
+.text-warning {
+  color: var(--color-warning) !important;
+}
+
+.text-danger {
+  color: var(--color-danger) !important;
+}
+
+.text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+/* Unpaid Tasks Report */
+.unpaid-tasks-report {
+  padding: var(--spacing-md);
+}
+
+.unpaid-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.unpaid-report-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.unpaid-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.filter-group label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.filter-group select {
+  min-width: 180px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.unpaid-content .data-table {
+  margin-top: 0;
+}
+
+.unpaid-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.unpaid-table thead th {
+  background-color: var(--color-bg-tertiary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.unpaid-table tbody td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.unpaid-table tbody tr:hover {
+  background-color: var(--color-bg-secondary);
 }
 
 @media (max-width: 480px) {

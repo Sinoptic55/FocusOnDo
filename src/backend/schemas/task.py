@@ -20,6 +20,8 @@ class TaskBase(BaseModel):
     first_action: Optional[str] = Field(None, max_length=500)
     external_link: Optional[str] = Field(None, max_length=500)
     parent_task_id: Optional[int] = None
+    is_completed: bool = False
+    is_paid: bool = False
 
 
 class TaskCreate(TaskBase):
@@ -41,6 +43,8 @@ class TaskUpdate(BaseModel):
     first_action: Optional[str] = Field(None, max_length=500)
     external_link: Optional[str] = Field(None, max_length=500)
     parent_task_id: Optional[int] = None
+    is_completed: Optional[bool] = None
+    is_paid: Optional[bool] = None
 
 
 class TaskResponse(TaskBase):

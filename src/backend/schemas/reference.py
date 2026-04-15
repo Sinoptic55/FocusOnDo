@@ -17,9 +17,11 @@ class TaskListCreate(TaskListBase):
     pass
 
 
-class TaskListUpdate(TaskListBase):
+class TaskListUpdate(BaseModel):
     """Schema for updating a task list."""
-    pass
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    color: Optional[str] = Field(None, pattern=r'^#[0-9A-Fa-f]{6}$')
+    order: Optional[int] = None
 
 
 class TaskListResponse(TaskListBase):
@@ -34,6 +36,7 @@ class TaskListResponse(TaskListBase):
 class TaskStatusBase(BaseModel):
     """Base task status schema."""
     name: str = Field(..., min_length=1, max_length=50)
+    color: str = Field("#808080", pattern=r'^#[0-9A-Fa-f]{6}$')
     board_visible: Optional[bool] = True
     order: Optional[int] = 0
 
@@ -43,9 +46,12 @@ class TaskStatusCreate(TaskStatusBase):
     pass
 
 
-class TaskStatusUpdate(TaskStatusBase):
+class TaskStatusUpdate(BaseModel):
     """Schema for updating a task status."""
-    pass
+    name: Optional[str] = Field(None, min_length=1, max_length=50)
+    color: Optional[str] = Field(None, pattern=r'^#[0-9A-Fa-f]{6}$')
+    board_visible: Optional[bool] = None
+    order: Optional[int] = None
 
 
 class TaskStatusResponse(TaskStatusBase):
@@ -69,9 +75,11 @@ class ProjectCreate(ProjectBase):
     pass
 
 
-class ProjectUpdate(ProjectBase):
+class ProjectUpdate(BaseModel):
     """Schema for updating a project."""
-    pass
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    color: Optional[str] = Field(None, pattern=r'^#[0-9A-Fa-f]{6}$')
+    archived: Optional[bool] = None
 
 
 class ProjectResponse(ProjectBase):
@@ -93,9 +101,9 @@ class ClientCreate(ClientBase):
     pass
 
 
-class ClientUpdate(ClientBase):
+class ClientUpdate(BaseModel):
     """Schema for updating a client."""
-    pass
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
 
 
 class ClientResponse(ClientBase):
@@ -119,9 +127,11 @@ class PomodoroIntervalCreate(PomodoroIntervalBase):
     pass
 
 
-class PomodoroIntervalUpdate(PomodoroIntervalBase):
+class PomodoroIntervalUpdate(BaseModel):
     """Schema for updating a pomodoro interval."""
-    pass
+    order: Optional[int] = Field(None, ge=0)
+    type: Optional[str] = Field(None, pattern=r'^(work|break|short_break|long_break)$')
+    duration_minutes: Optional[int] = Field(None, gt=0)
 
 
 class PomodoroIntervalResponse(PomodoroIntervalBase):

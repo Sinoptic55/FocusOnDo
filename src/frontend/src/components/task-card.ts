@@ -80,15 +80,23 @@ export class TaskCard extends Component<any, TaskCardProps> {
     if (isTaskOverdue) {
       this.element.classList.add('task-overdue');
     }
+    if (task.is_completed) {
+      this.element.classList.add('task-completed');
+    }
+    if (task.is_paid) {
+      this.element.classList.add('task-paid');
+    }
 
     this.element.innerHTML = `
       <div class="task-card-header">
-        <h3 class="task-card-title">${escapeHtml(task.title)}</h3>
         <div class="task-card-meta">
           ${(task as any).recurring_task_id ? '<span class="badge task-recurring-badge" title="Повторяющаяся задача">🔄</span>' : ''}
+          ${task.is_completed ? '<span class="badge task-completed-badge" title="Выполнена">✅</span>' : ''}
+          ${task.is_paid ? '<span class="badge task-paid-badge" title="Оплачена">💰</span>' : ''}
           ${list ? `<span class="badge task-list-badge" style="background-color: ${list.color}">${escapeHtml(list.name)}</span>` : ''}
           ${project ? `<span class="badge task-project-badge" style="background-color: ${project.color}">${escapeHtml(project.name)}</span>` : ''}
         </div>
+        <h3 class="task-card-title">${escapeHtml(task.title)}</h3>
       </div>
       
       ${task.description ? `<p class="task-card-description">${escapeHtml(task.description)}</p>` : ''}

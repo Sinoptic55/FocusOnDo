@@ -1,5 +1,5 @@
 import esbuild from 'esbuild';
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, cpSync } from 'fs';
 import { join } from 'path';
 
 const isWatch = process.argv.includes('--watch');
@@ -29,6 +29,17 @@ if (!existsSync(distDir)) {
 }
 copyFileSync('index.html', join(distDir, 'index.html'));
 copyFileSync('styles.css', join(distDir, 'styles.css'));
+
+// Copy sounds directory if it exists
+const soundsDir = 'sounds';
+const distSoundsDir = join(distDir, 'sounds');
+if (existsSync(soundsDir)) {
+  if (!existsSync(distSoundsDir)) {
+    mkdirSync(distSoundsDir, { recursive: true });
+  }
+  cpSync(soundsDir, distSoundsDir, { recursive: true });
+  console.log('Copied sounds directory to dist/sounds');
+}
 
 if (isWatch) {
   const ctx = await esbuild.context(buildOptions);

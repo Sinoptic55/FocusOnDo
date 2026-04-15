@@ -31,18 +31,21 @@ async def create_seed_data(db: AsyncSession, user_id: int):
     todo_status = TaskStatus(
         user_id=user_id,
         name="To Do",
+        color="#3B82F6",  # Blue
         board_visible=True,
         order=0
     )
     in_progress_status = TaskStatus(
         user_id=user_id,
         name="In Progress",
+        color="#F59E0B",  # Amber
         board_visible=True,
         order=1
     )
     done_status = TaskStatus(
         user_id=user_id,
         name="Done",
+        color="#10B981",  # Green
         board_visible=False,
         order=2
     )

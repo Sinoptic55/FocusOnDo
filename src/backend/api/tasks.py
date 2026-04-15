@@ -167,6 +167,19 @@ async def update_task(
     for field, value in update_data.items():
         setattr(task, field, value)
 
+    # Automatically set status to 'Done' if marked as completed
+    if update_data.get("is_completed") is True:
+        # Find 'Done' status for this user
+        status_result = await db.execute(
+            select(TaskStatus).where(
+                TaskStatus.user_id == current_user.id,
+                TaskStatus.name == "Done"
+            )
+        )
+        done_status = status_result.scalar_one_or_none()
+        if done_status:
+            task.status_id = done_status.id
+
     await db.commit()
     await db.refresh(task)
 

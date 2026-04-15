@@ -21,7 +21,9 @@ import type {
   RegisterRequest,
   LoginRequest,
   TimerState,
-  AnalyticsData
+  AnalyticsData,
+  UnpaidTaskData,
+  UnpaidTasksFilters
 } from './models';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -370,6 +372,37 @@ export class ApiService {
   // Analytics
   async getAnalyticsDashboard(): Promise<AnalyticsData> {
     return this.request<AnalyticsData>('/api/analytics/dashboard');
+  }
+
+  // Unpaid Tasks Report
+  async getUnpaidTasks(filters: UnpaidTasksFilters = {}): Promise<UnpaidTaskData[]> {
+    const params = new URLSearchParams();
+    if (filters.project_id) params.set('project_id', String(filters.project_id));
+    if (filters.client_id) params.set('client_id', String(filters.client_id));
+    if (filters.list_id) params.set('list_id', String(filters.list_id));
+    
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<UnpaidTaskData[]>(`/api/analytics/unpaid-tasks${query}`);
+  }
+
+  async exportUnpaidTasksOds(filters: UnpaidTasksFilters = {}): Promise<Blob> {
+    const params = new URLSearchParams();
+    if (filters.project_id) params.set('project_id', String(filters.project_id));
+    if (filters.client_id) params.set('client_id', String(filters.client_id));
+    if (filters.list_id) params.set('list_id', String(filters.list_id));
+    
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const url = `${API_BASE_URL}/api/analytics/unpaid-tasks/export${query}`;
+    
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Export failed');
+    }
+    
+    return response.blob();
   }
 }
 

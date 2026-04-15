@@ -5,7 +5,7 @@
 import { Component } from '../components/component';
 import { storage } from '../utils';
 import { api } from '../api';
-import type { Task, Project, Client } from '../models';
+import type { Task, Project, Client, TaskList } from '../models';
 
 import { ListView } from './list-view';
 import { TaskForm } from '../components/task-form';
@@ -16,8 +16,10 @@ interface TasksViewState {
   activeView: 'list' | 'date-board' | 'status-board';
   projects: Project[];
   clients: Client[];
+  lists: TaskList[];
   filterProjectId: number | null;
   filterClientId: number | null;
+  filterListId: number | null;
   loading: boolean;
 }
 
@@ -29,19 +31,22 @@ export class TasksView extends Component<TasksViewState> {
       activeView: storage.get('preferred_task_view', 'list'),
       projects: [],
       clients: [],
+      lists: [],
       filterProjectId: null,
       filterClientId: null,
+      filterListId: null,
       loading: true
     });
   }
 
   protected async onMount(): Promise<void> {
     try {
-      const [projects, clients] = await Promise.all([
+      const [projects, clients, lists] = await Promise.all([
         api.getProjects(),
-        api.getClients()
+        api.getClients(),
+        api.getLists()
       ]);
-      this.setState({ projects, clients, loading: false });
+      this.setState({ projects, clients, lists, loading: false });
     } catch (error) {
       console.error('Failed to load filters', error);
       this.setState({ loading: false });
@@ -70,6 +75,10 @@ export class TasksView extends Component<TasksViewState> {
           <select id="filter-client">
             <option value="">Все клиенты</option>
             ${this.state.clients.map(c => `<option value="${c.id}" ${this.state.filterClientId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+          </select>
+          <select id="filter-list">
+            <option value="">Все списки</option>
+            ${this.state.lists.map(l => `<option value="${l.id}" ${this.state.filterListId === l.id ? 'selected' : ''}>${l.name}</option>`).join('')}
           </select>
           <button class="btn btn-secondary" id="btn-smart-start" title="Умный выбор следующей задачи">🪄 Что делать дальше?</button>
           <button class="btn btn-primary" id="btn-new-task">+ Новая задача</button>
@@ -102,6 +111,11 @@ export class TasksView extends Component<TasksViewState> {
     this.element.querySelector('#filter-client')?.addEventListener('change', (e) => {
       const val = (e.target as HTMLSelectElement).value;
       this.setState({ filterClientId: val ? parseInt(val) : null });
+    });
+
+    this.element.querySelector('#filter-list')?.addEventListener('change', (e) => {
+      const val = (e.target as HTMLSelectElement).value;
+      this.setState({ filterListId: val ? parseInt(val) : null });
     });
 
     this.element.querySelector('#btn-new-task')?.addEventListener('click', () => {
@@ -171,7 +185,8 @@ export class TasksView extends Component<TasksViewState> {
 
     const filters = {
       project_id: this.state.filterProjectId || undefined,
-      client_id: this.state.filterClientId || undefined
+      client_id: this.state.filterClientId || undefined,
+      list_id: this.state.filterListId || undefined
     };
 
     switch (this.state.activeView) {

@@ -22,6 +22,7 @@ interface DateBoardViewProps {
   filters: {
     project_id?: number;
     client_id?: number;
+    list_id?: number;
   };
 }
 
@@ -66,6 +67,22 @@ export class DateBoardView extends Component<DateBoardViewState, DateBoardViewPr
       return;
     }
 
+    const grouped = {
+      'overdue': 0,
+      'today': 0,
+      'tomorrow': 0,
+      'this-week': 0,
+      'later': 0,
+      'no-date': 0
+    };
+
+    // Count root tasks for each group
+    const rootTasks = this.state.tasks.filter(t => !t.parent_task_id && !t.is_completed && !t.is_paid);
+    rootTasks.forEach(t => {
+      const group = this.getGroupForTask(t) as keyof typeof grouped;
+      grouped[group]++;
+    });
+
     this.element.innerHTML = `
       <div class="view-controls">
         <label>
@@ -79,27 +96,57 @@ export class DateBoardView extends Component<DateBoardViewState, DateBoardViewPr
       </div>
       <div id="date-columns" class="board-columns">
         <div class="board-column" data-column="overdue">
-          <div class="column-header"><h3>Просрочено</h3></div>
+          <div class="column-header">
+            <div class="list-title-group">
+              <h3>Просрочено</h3>
+              <span class="list-count-badge">${grouped['overdue']}</span>
+            </div>
+          </div>
           <div class="column-content" data-drop-zone="overdue"></div>
         </div>
         <div class="board-column" data-column="today">
-          <div class="column-header"><h3>Сегодня</h3></div>
+          <div class="column-header">
+            <div class="list-title-group">
+              <h3>Сегодня</h3>
+              <span class="list-count-badge">${grouped['today']}</span>
+            </div>
+          </div>
           <div class="column-content" data-drop-zone="today"></div>
         </div>
         <div class="board-column" data-column="tomorrow">
-          <div class="column-header"><h3>Завтра</h3></div>
+          <div class="column-header">
+            <div class="list-title-group">
+              <h3>Завтра</h3>
+              <span class="list-count-badge">${grouped['tomorrow']}</span>
+            </div>
+          </div>
           <div class="column-content" data-drop-zone="tomorrow"></div>
         </div>
         <div class="board-column" data-column="this-week">
-          <div class="column-header"><h3>На этой неделе</h3></div>
+          <div class="column-header">
+            <div class="list-title-group">
+              <h3>На этой неделе</h3>
+              <span class="list-count-badge">${grouped['this-week']}</span>
+            </div>
+          </div>
           <div class="column-content" data-drop-zone="this-week"></div>
         </div>
         <div class="board-column" data-column="later">
-          <div class="column-header"><h3>Позже</h3></div>
+          <div class="column-header">
+            <div class="list-title-group">
+              <h3>Позже</h3>
+              <span class="list-count-badge">${grouped['later']}</span>
+            </div>
+          </div>
           <div class="column-content" data-drop-zone="later"></div>
         </div>
         <div class="board-column" data-column="no-date">
-          <div class="column-header"><h3>Без даты</h3></div>
+          <div class="column-header">
+            <div class="list-title-group">
+              <h3>Без даты</h3>
+              <span class="list-count-badge">${grouped['no-date']}</span>
+            </div>
+          </div>
           <div class="column-content" data-drop-zone="no-date"></div>
         </div>
       </div>
@@ -153,7 +200,7 @@ export class DateBoardView extends Component<DateBoardViewState, DateBoardViewPr
     };
 
     // Filter root tasks
-    const rootTasks = this.state.tasks.filter(t => !t.parent_task_id);
+    const rootTasks = this.state.tasks.filter(t => !t.parent_task_id && !t.is_completed && !t.is_paid);
     rootTasks.forEach(t => grouped[this.getGroupForTask(t) as keyof typeof grouped].push(t));
 
     Object.keys(grouped).forEach(key => {

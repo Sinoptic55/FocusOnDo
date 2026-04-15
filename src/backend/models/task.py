@@ -1,7 +1,7 @@
 """
 Task model for managing tasks with hierarchical structure.
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Index, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.database import Base
@@ -28,6 +28,8 @@ class Task(Base):
     pomodoro_estimate = Column(Integer, nullable=True)  # Estimated number of pomodoros
     first_action = Column(String(500), nullable=True)  # First concrete action to start
     external_link = Column(String(500), nullable=True)  # Link to external task/ticket
+    is_completed = Column(Boolean, default=False, nullable=False, server_default='false')
+    is_paid = Column(Boolean, default=False, nullable=False, server_default='false')
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

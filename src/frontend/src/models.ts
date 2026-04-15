@@ -24,6 +24,8 @@ export interface Task {
   pomodoro_estimate: number | null;
   first_action: string | null;
   external_link: string | null;
+  is_completed: boolean;
+  is_paid: boolean;
   created_at: string;
   updated_at: string;
   total_time: number;
@@ -55,6 +57,7 @@ export interface TaskStatus {
   id: number;
   user_id: number;
   name: string;
+  color: string;
   board_visible: boolean;
   order: number;
 }
@@ -188,6 +191,21 @@ export interface DashboardStats {
   };
 }
 
+// Unpaid Tasks Report
+export interface UnpaidTaskData {
+  task_id: number;
+  task_title: string;
+  end_date: string | null;  // ISO datetime
+  actual_time_minutes: number;
+  billed_time_minutes: number;
+}
+
+export interface UnpaidTasksFilters {
+  project_id?: number | null;
+  client_id?: number | null;
+  list_id?: number | null;
+}
+
 // Request/Response types
 export interface TaskCreate {
   title: string;
@@ -202,6 +220,8 @@ export interface TaskCreate {
   first_action?: string;
   external_link?: string;
   parent_task_id?: number;
+  is_completed?: boolean;
+  is_paid?: boolean;
 }
 
 export interface TaskUpdate {
@@ -216,6 +236,8 @@ export interface TaskUpdate {
   pomodoro_estimate?: number;
   first_action?: string;
   external_link?: string;
+  is_completed?: boolean;
+  is_paid?: boolean;
 }
 
 export interface TaskQuickCreate {

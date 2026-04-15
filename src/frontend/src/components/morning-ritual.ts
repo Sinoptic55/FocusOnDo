@@ -91,18 +91,18 @@ export class MorningRitual extends Dialog<MorningRitualState> {
           <div class="ritual-column">
             
             <div class="ritual-section">
-              <h3>Просрочено <span class="badge badge-danger">\${this.state.overdue.length}</span></h3>
+              <h3>Просрочено <span class="badge badge-danger">${this.state.overdue.length}</span></h3>
               <div class="ritual-task-list" data-zone="overdue">
-                \${this.state.overdue.map(t => this.renderTaskItem(t)).join('')}
-                \${this.state.overdue.length === 0 ? '<p class="empty-msg">Нет просроченных задач</p>' : ''}
+                ${this.state.overdue.map(t => this.renderTaskItem(t)).join('')}
+                ${this.state.overdue.length === 0 ? '<p class="empty-msg">Нет просроченных задач</p>' : ''}
               </div>
             </div>
 
             <div class="ritual-section">
-              <h3>Inbox <span class="badge">\${this.state.inbox.length}</span></h3>
+              <h3>Inbox <span class="badge">${this.state.inbox.length}</span></h3>
               <div class="ritual-task-list" data-zone="inbox">
-                \${this.state.inbox.map(t => this.renderTaskItem(t)).join('')}
-                \${this.state.inbox.length === 0 ? '<p class="empty-msg">Inbox пуст</p>' : ''}
+                ${this.state.inbox.map(t => this.renderTaskItem(t)).join('')}
+                ${this.state.inbox.length === 0 ? '<p class="empty-msg">Inbox пуст</p>' : ''}
               </div>
             </div>
 
@@ -111,11 +111,11 @@ export class MorningRitual extends Dialog<MorningRitualState> {
           <!-- Today -->
           <div class="ritual-column highlight-column">
             <div class="ritual-section">
-              <h3>Сделать сегодня <span class="badge badge-primary">\${this.state.today.length}</span></h3>
+              <h3>Сделать сегодня <span class="badge badge-primary">${this.state.today.length}</span></h3>
               <p class="text-muted text-sm">Перетащите сюда задачи из Inbox или Просроченных</p>
               <div class="ritual-task-list drop-zone-today" data-zone="today">
-                \${this.state.today.map(t => this.renderTaskItem(t)).join('')}
-                \${this.state.today.length === 0 ? '<p class="empty-msg">План на сегодня пока пуст</p>' : ''}
+                ${this.state.today.map(t => this.renderTaskItem(t)).join('')}
+                ${this.state.today.length === 0 ? '<p class="empty-msg">План на сегодня пока пуст</p>' : ''}
               </div>
             </div>
           </div>
@@ -134,11 +134,11 @@ export class MorningRitual extends Dialog<MorningRitualState> {
 
   private renderTaskItem(task: Task): string {
     return `
-      <div class="ritual-task-item" draggable="true" data-id="\${task.id}">
+      <div class="ritual-task-item" draggable="true" data-id="${task.id}">
         <span class="drag-handle">☰</span>
         <div class="task-info">
-          <span class="task-title">\${escapeHtml(task.title)}</span>
-          \${task.pomodoro_estimate ? \`<span class="task-est">🍅 \${task.pomodoro_estimate}</span>\` : ''}
+          <span class="task-title">${escapeHtml(task.title)}</span>
+          ${task.pomodoro_estimate ? `<span class="task-est">🍅 ${task.pomodoro_estimate}</span>` : ''}
         </div>
       </div>
     `;

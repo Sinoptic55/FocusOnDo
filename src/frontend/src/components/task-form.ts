@@ -3,6 +3,7 @@
  */
 
 import { Dialog } from './dialog';
+import { TimeSegmentsEditorDialog } from './time-segments-editor-dialog';
 import type { Task, TaskList, TaskStatus, Project, Client, TaskCreate, TaskUpdate, RecurringTask, RecurringTaskCreate } from '../models';
 import { api } from '../api';
 import { escapeHtml, showSuccess, showError } from '../utils';
@@ -117,10 +118,27 @@ export class TaskForm extends Dialog<TaskFormState, TaskFormProps> {
       <div class="dialog-body">
         <form id="task-form">
           <div class="form-section">
-            <h3>Основное</h3>
+            <h3 class="section-header-with-action">
+              Основное
+              ${this.state.task ? `<button type="button" class="btn-icon btn-time-segments" id="btn-time-segments" title="Сегменты времени">⏱</button>` : ''}
+            </h3>
             <div class="form-group">
               <label for="task-title">Название *</label>
               <input type="text" id="task-title" name="title" required maxlength="200" value="${escapeHtml(t.title || '')}">
+            </div>
+            <div class="form-row">
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" name="is_completed" ${t.is_completed ? 'checked' : ''}>
+                  Выполнено
+                </label>
+              </div>
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" name="is_paid" ${t.is_paid ? 'checked' : ''}>
+                  Оплачена
+                </label>
+              </div>
             </div>
             <div class="form-group">
               <label for="task-description">Описание (Markdown поддерживается)</label>
@@ -296,6 +314,20 @@ export class TaskForm extends Dialog<TaskFormState, TaskFormProps> {
     this.setupClose();
     this.element.querySelector('.cancel-btn')?.addEventListener('click', () => this.close());
 
+    // Open time segments editor
+    this.element.querySelector('#btn-time-segments')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!this.state.task) return;
+      const dialog = new TimeSegmentsEditorDialog({
+        taskId: this.state.task.id,
+        onSegmentsChanged: () => {
+          // Task total time will be recalculated by API
+        }
+      });
+      dialog.open();
+    });
+
     // Subtasks
     this.element.querySelector('#add-subtask-btn')?.addEventListener('click', () => {
       this.setState({ subtasks: [...this.state.subtasks, { title: '' }] });
@@ -380,6 +412,8 @@ export class TaskForm extends Dialog<TaskFormState, TaskFormProps> {
         pomodoro_estimate: fd.get('pomodoro_estimate') ? parseInt(fd.get('pomodoro_estimate') as string) : undefined,
         first_action: fd.get('first_action') as string || undefined,
         external_link: fd.get('external_link') as string || undefined,
+        is_completed: fd.get('is_completed') === 'on',
+        is_paid: fd.get('is_paid') === 'on',
       };
 
       try {

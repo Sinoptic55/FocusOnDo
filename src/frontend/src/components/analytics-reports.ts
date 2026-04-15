@@ -5,12 +5,14 @@
 import type { ProjectTimeData, ClientTimeData } from '../models';
 import { api } from '../api';
 import { formatTime, showSuccess, showError } from '../utils';
+import { UnpaidTasksReport } from './unpaid-tasks-report';
 
 export class AnalyticsReports {
   private element: HTMLElement | null = null;
   private projectData: ProjectTimeData[] = [];
   private clientData: ClientTimeData[] = [];
-  private activeTab: 'projects' | 'clients' = 'projects';
+  private activeTab: 'projects' | 'clients' | 'unpaid' = 'projects';
+  private unpaidReport: UnpaidTasksReport | null = null;
 
   constructor() {
     this.createElements();
@@ -26,6 +28,7 @@ export class AnalyticsReports {
       <div class="reports-header">
         <button class="tab-btn ${this.activeTab === 'projects' ? 'active' : ''}" data-tab="projects">Проекты</button>
         <button class="tab-btn ${this.activeTab === 'clients' ? 'active' : ''}" data-tab="clients">Клиенты</button>
+        <button class="tab-btn ${this.activeTab === 'unpaid' ? 'active' : ''}" data-tab="unpaid">Неоплаченные</button>
       </div>
       <div class="reports-content">
         <div id="projects-report" class="report-section">
@@ -39,6 +42,9 @@ export class AnalyticsReports {
           <div id="clients-table" class="data-table">
             <!-- Clients data will be rendered here -->
           </div>
+        </div>
+        <div id="unpaid-report" class="report-section hidden">
+          <!-- Unpaid tasks report component will be rendered here -->
         </div>
       </div>
     `;
@@ -56,7 +62,7 @@ export class AnalyticsReports {
     tabButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const tab = btn.getAttribute('data-tab')!;
-        this.switchTab(tab as 'projects' | 'clients');
+        this.switchTab(tab as 'projects' | 'clients' | 'unpaid');
       });
     });
   }
@@ -64,7 +70,7 @@ export class AnalyticsReports {
   /**
    * Switch tab
    */
-  private switchTab(tab: 'projects' | 'clients'): void {
+  private switchTab(tab: 'projects' | 'clients' | 'unpaid'): void {
     this.activeTab = tab;
     
     // Update button states
@@ -75,21 +81,38 @@ export class AnalyticsReports {
     // Show/hide sections
     const projectsSection = this.element.querySelector('#projects-report')!;
     const clientsSection = this.element.querySelector('#clients-report')!;
+    const unpaidSection = this.element.querySelector('#unpaid-report')!;
     
-    if (tab === 'projects') {
-      projectsSection.classList.remove('hidden');
-      clientsSection.classList.add('hidden');
-    } else {
-      projectsSection.classList.add('hidden');
-      clientsSection.classList.remove('hidden');
-    }
+    projectsSection.classList.toggle('hidden', tab !== 'projects');
+    clientsSection.classList.toggle('hidden', tab !== 'clients');
+    unpaidSection.classList.toggle('hidden', tab !== 'unpaid');
 
     // Load data for active tab
     if (tab === 'projects') {
       this.loadProjectData();
-    } else {
+    } else if (tab === 'clients') {
       this.loadClientData();
+    } else if (tab === 'unpaid') {
+      this.loadUnpaidReport();
     }
+  }
+
+  /**
+   * Load unpaid tasks report
+   */
+  private loadUnpaidReport(): void {
+    const container = this.element?.querySelector('#unpaid-report');
+    if (!container) return;
+
+    if (!this.unpaidReport) {
+      this.unpaidReport = new UnpaidTasksReport();
+      const reportEl = this.unpaidReport.getElement();
+      if (reportEl) {
+        container.appendChild(reportEl);
+      }
+    }
+    
+    this.unpaidReport?.refresh();
   }
 
   /**
