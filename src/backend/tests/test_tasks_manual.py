@@ -32,6 +32,8 @@ async def test_create_task():
         obj.id = 1
         obj.created_at = datetime.now()
         obj.updated_at = datetime.now()
+        obj.is_completed = False
+        obj.is_paid = False
     db.refresh.side_effect = mock_refresh
     
     response = await create_task(task_data, current_user, db)
@@ -48,8 +50,8 @@ async def test_get_tasks():
     db = AsyncMock()
     
     tasks = [
-        Task(id=1, user_id=1, title="Task 1", created_at=datetime.now(), updated_at=datetime.now()),
-        Task(id=2, user_id=1, title="Task 2", created_at=datetime.now(), updated_at=datetime.now())
+        Task(id=1, user_id=1, title="Task 1", is_completed=False, is_paid=False, created_at=datetime.now(), updated_at=datetime.now()),
+        Task(id=2, user_id=1, title="Task 2", is_completed=False, is_paid=False, created_at=datetime.now(), updated_at=datetime.now())
     ]
     
     mock_result = MagicMock()

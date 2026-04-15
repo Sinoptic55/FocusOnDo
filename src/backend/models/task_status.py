@@ -14,6 +14,7 @@ class TaskStatus(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(50), nullable=False)
+    color = Column(String(7), nullable=False, default="#808080")
     board_visible = Column(Boolean, nullable=False, default=True)  # Whether status appears on board view
     order = Column("order", Integer, nullable=False, default=0)
 

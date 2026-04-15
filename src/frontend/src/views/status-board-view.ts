@@ -77,6 +77,16 @@ export class StatusBoardView extends Component<StatusBoardViewState, StatusBoard
       return;
     }
 
+    const countsByStatus = new Map<number, number>();
+    this.state.statuses.forEach(s => countsByStatus.set(s.id, 0));
+    // Filter root tasks
+    const rootTasks = this.state.tasks.filter(t => !t.parent_task_id && !t.is_paid);
+    rootTasks.forEach(t => {
+      if (t.status_id && countsByStatus.has(t.status_id)) {
+        countsByStatus.set(t.status_id, countsByStatus.get(t.status_id)! + 1);
+      }
+    });
+
     this.element.innerHTML = `
       <div class="view-controls">
         <label>
@@ -91,7 +101,12 @@ export class StatusBoardView extends Component<StatusBoardViewState, StatusBoard
       <div id="status-columns" class="board-columns">
         ${this.state.statuses.map(status => `
           <div class="board-column" data-status-id="${status.id}">
-            <div class="column-header"><h3>${status.name}</h3></div>
+            <div class="column-header" style="background-color: ${status.color}; color: #fff;">
+              <div class="list-title-group">
+                <h3>${status.name}</h3>
+                <span class="list-count-badge" style="background-color: rgba(255,255,255,0.2); color: #fff; border-color: rgba(255,255,255,0.3);">${countsByStatus.get(status.id) || 0}</span>
+              </div>
+            </div>
             <div class="column-content" data-drop-zone="${status.id}"></div>
           </div>
         `).join('')}
@@ -119,7 +134,7 @@ export class StatusBoardView extends Component<StatusBoardViewState, StatusBoard
     this.state.statuses.forEach(s => tasksByStatus.set(s.id, []));
 
     // Filter root tasks
-    const rootTasks = this.state.tasks.filter(t => !t.parent_task_id);
+    const rootTasks = this.state.tasks.filter(t => !t.parent_task_id && !t.is_paid);
     rootTasks.forEach(t => {
       if (t.status_id && tasksByStatus.has(t.status_id)) {
         tasksByStatus.get(t.status_id)!.push(t);

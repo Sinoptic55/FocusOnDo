@@ -122,6 +122,20 @@ export class TaskForm extends Dialog<TaskFormState, TaskFormProps> {
               <label for="task-title">Название *</label>
               <input type="text" id="task-title" name="title" required maxlength="200" value="${escapeHtml(t.title || '')}">
             </div>
+            <div class="form-row">
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" name="is_completed" ${t.is_completed ? 'checked' : ''}>
+                  Выполнено
+                </label>
+              </div>
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" name="is_paid" ${t.is_paid ? 'checked' : ''}>
+                  Оплачена
+                </label>
+              </div>
+            </div>
             <div class="form-group">
               <label for="task-description">Описание (Markdown поддерживается)</label>
               <textarea id="task-description" name="description" rows="3">${escapeHtml(t.description || '')}</textarea>
@@ -380,6 +394,8 @@ export class TaskForm extends Dialog<TaskFormState, TaskFormProps> {
         pomodoro_estimate: fd.get('pomodoro_estimate') ? parseInt(fd.get('pomodoro_estimate') as string) : undefined,
         first_action: fd.get('first_action') as string || undefined,
         external_link: fd.get('external_link') as string || undefined,
+        is_completed: fd.get('is_completed') === 'on',
+        is_paid: fd.get('is_paid') === 'on',
       };
 
       try {

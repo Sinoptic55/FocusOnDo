@@ -17,6 +17,7 @@ export abstract class Dialog<S = any, P = any> extends Component<S, P> {
   }
 
   public open(): void {
+    this.update();
     this.overlay.classList.remove('hidden');
     this.onOpen();
   }

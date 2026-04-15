@@ -49,26 +49,26 @@ class ManualTimeEntryDialog extends Dialog<ManualEntryState, ManualEntryProps> {
         <form id="manual-time-form">
           <div class="form-group">
             <label>Время начала</label>
-            <input type="datetime-local" name="startTime" value="\${this.state.startTime}" required>
+            <input type="datetime-local" name="startTime" value="${this.state.startTime}" required>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Фактическое (мин)</label>
-              <input type="number" name="actualMins" min="1" value="\${this.state.actualMins}" required>
+              <input type="number" name="actualMins" min="1" value="${this.state.actualMins}" required>
             </div>
             <div class="form-group">
               <label>Выставленное (мин)</label>
-              <input type="number" name="billedMins" min="1" value="\${this.state.billedMins}" required>
+              <input type="number" name="billedMins" min="1" value="${this.state.billedMins}" required>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Уровень энергии (1-5)</label>
-              <input type="number" name="energyLevel" min="1" max="5" value="\${this.state.energyLevel}">
+              <input type="number" name="energyLevel" min="1" max="5" value="${this.state.energyLevel}">
             </div>
             <div class="form-group checkbox-group" style="align-items: flex-start; justify-content: center; height: 100%;">
               <label>
-                <input type="checkbox" name="progressed" \${this.state.progressed ? 'checked' : ''}>
+                <input type="checkbox" name="progressed" ${this.state.progressed ? 'checked' : ''}>
                 Задача продвинулась
               </label>
             </div>
@@ -179,15 +179,15 @@ export class TimeSegmentsList extends Component<TimeSegmentsListState, TimeSegme
       <div class="ts-summary stats-grid mb-md">
         <div class="stat-card">
           <span class="stat-label">Фактическое</span>
-          <span class="stat-value">\${formatTime(totalActual)}</span>
+          <span class="stat-value">${formatTime(totalActual)}</span>
         </div>
         <div class="stat-card">
           <span class="stat-label">Выставленное</span>
-          <span class="stat-value">\${formatTime(totalBilled)}</span>
+          <span class="stat-value">${formatTime(totalBilled)}</span>
         </div>
         <div class="stat-card">
           <span class="stat-label">Разница (Bill - Act)</span>
-          <span class="stat-value \${diffClass}">\${diff >= 0 ? '+' : '-'}\${formatTime(Math.abs(diff))}</span>
+          <span class="stat-value ${diffClass}">${diff >= 0 ? '+' : '-'}${formatTime(Math.abs(diff))}</span>
         </div>
       </div>
 
@@ -203,8 +203,8 @@ export class TimeSegmentsList extends Component<TimeSegmentsListState, TimeSegme
             </tr>
           </thead>
           <tbody>
-            \${this.state.segments.length === 0 ? '<tr><td colspan="5" class="text-center">Нет записей</td></tr>' : ''}
-            \${this.state.segments.map(s => this.renderRow(s)).join('')}
+            ${this.state.segments.length === 0 ? '<tr><td colspan="5" class="text-center">Нет записей</td></tr>' : ''}
+            ${this.state.segments.map(s => this.renderRow(s)).join('')}
           </tbody>
         </table>
       </div>
@@ -222,14 +222,14 @@ export class TimeSegmentsList extends Component<TimeSegmentsListState, TimeSegme
 
       return `
         <tr class="ts-editing-row">
-          <td>\${formatDateTime(s.start_time)}</td>
-          <td><input type="number" class="edit-actual form-control" value="\${actMins}" min="0" style="width:70px"> мин</td>
-          <td><input type="number" class="edit-billed form-control" value="\${billMins}" min="0" style="width:70px"> мин</td>
+          <td>${formatDateTime(s.start_time)}</td>
+          <td><input type="number" class="edit-actual form-control" value="${actMins}" min="0" style="width:70px"> мин</td>
+          <td><input type="number" class="edit-billed form-control" value="${billMins}" min="0" style="width:70px"> мин</td>
           <td>
-            <input type="number" class="edit-energy form-control" value="\${s.energy_level || 3}" min="1" max="5" style="width:60px">
+            <input type="number" class="edit-energy form-control" value="${s.energy_level || 3}" min="1" max="5" style="width:60px">
           </td>
           <td>
-            <button class="btn-icon text-success btn-save-edit" data-id="\${s.id}">✓</button>
+            <button class="btn-icon text-success btn-save-edit" data-id="${s.id}">✓</button>
             <button class="btn-icon text-muted btn-cancel-edit">&times;</button>
           </td>
         </tr>
@@ -238,13 +238,13 @@ export class TimeSegmentsList extends Component<TimeSegmentsListState, TimeSegme
 
     return `
       <tr>
-        <td>\${formatDateTime(s.start_time)}</td>
-        <td>\${formatTime(s.actual_time_seconds)}</td>
-        <td>\${formatTime(s.billed_time_seconds)}</td>
-        <td>\${s.energy_level ? '⚡'.repeat(s.energy_level) : '—'}</td>
+        <td>${formatDateTime(s.start_time)}</td>
+        <td>${formatTime(s.actual_time_seconds)}</td>
+        <td>${formatTime(s.billed_time_seconds)}</td>
+        <td>${s.energy_level ? '⚡'.repeat(s.energy_level) : '—'}</td>
         <td>
-          <button class="btn-icon btn-edit-ts" data-id="\${s.id}" title="Редактировать">✏️</button>
-          <button class="btn-icon text-danger btn-delete-ts" data-id="\${s.id}" title="Удалить">🗑️</button>
+          <button class="btn-icon btn-edit-ts" data-id="${s.id}" title="Редактировать">✏️</button>
+          <button class="btn-icon text-danger btn-delete-ts" data-id="${s.id}" title="Удалить">🗑️</button>
         </td>
       </tr>
     `;

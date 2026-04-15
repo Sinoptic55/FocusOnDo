@@ -70,27 +70,27 @@ export class InboxProcessing extends Dialog<InboxProcessingState> {
 
     this.element.innerHTML = `
       <div class="dialog-header">
-        <h2>📥 Обработка Inbox (\${this.state.tasks.length})</h2>
+        <h2>📥 Обработка Inbox (${this.state.tasks.length})</h2>
         <button class="dialog-close">&times;</button>
       </div>
       <div class="dialog-body inbox-processing-body">
         
         <div class="inbox-layout">
           <div class="inbox-tasks-list">
-            \${this.state.tasks.length === 0 ? '<p class="empty-msg">Inbox пуст! Отличная работа.</p>' : `
+            ${this.state.tasks.length === 0 ? '<p class="empty-msg">Inbox пуст! Отличная работа.</p>' : `
               <div class="inbox-list-header">
                 <label>
-                  <input type="checkbox" id="select-all-inbox" \${allSelected ? 'checked' : ''}>
+                  <input type="checkbox" id="select-all-inbox" ${allSelected ? 'checked' : ''}>
                   Выбрать все
                 </label>
               </div>
               <div class="inbox-scroll-area">
-                \${this.state.tasks.map(t => `
-                  <label class="inbox-task-item \${this.state.selectedTaskIds.has(t.id) ? 'selected' : ''}">
-                    <input type="checkbox" class="task-checkbox" value="\${t.id}" \${this.state.selectedTaskIds.has(t.id) ? 'checked' : ''}>
+                ${this.state.tasks.map(t => `
+                  <label class="inbox-task-item ${this.state.selectedTaskIds.has(t.id) ? 'selected' : ''}">
+                    <input type="checkbox" class="task-checkbox" value="${t.id}" ${this.state.selectedTaskIds.has(t.id) ? 'checked' : ''}>
                     <div class="task-info">
-                      <span class="task-title">\${escapeHtml(t.title)}</span>
-                      \${t.description ? \`<span class="task-desc">\${escapeHtml(t.description.substring(0, 50))}...</span>\` : ''}
+                      <span class="task-title">${escapeHtml(t.title)}</span>
+                      ${t.description ? `<span class="task-desc">${escapeHtml(t.description.substring(0, 50))}...</span>` : ''}
                     </div>
                   </label>
                 `).join('')}
@@ -99,13 +99,13 @@ export class InboxProcessing extends Dialog<InboxProcessingState> {
           </div>
 
           <div class="inbox-actions">
-            <h3>Действия для \${this.state.selectedTaskIds.size} задач</h3>
+            <h3>Действия для ${this.state.selectedTaskIds.size} задач</h3>
             
             <div class="form-group">
               <label>Переместить в проект:</label>
               <select id="action-project">
                 <option value="">(Без изменений)</option>
-                \${this.state.projects.map(p => \`<option value="\${p.id}">\${escapeHtml(p.name)}</option>\`).join('')}
+                ${this.state.projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')}
               </select>
             </div>
 
@@ -113,7 +113,7 @@ export class InboxProcessing extends Dialog<InboxProcessingState> {
               <label>Добавить в список:</label>
               <select id="action-list">
                 <option value="">(Без изменений)</option>
-                \${this.state.lists.map(l => \`<option value="\${l.id}">\${escapeHtml(l.name)}</option>\`).join('')}
+                ${this.state.lists.map(l => `<option value="${l.id}">${escapeHtml(l.name)}</option>`).join('')}
               </select>
             </div>
 
@@ -121,15 +121,15 @@ export class InboxProcessing extends Dialog<InboxProcessingState> {
               <label>Установить статус:</label>
               <select id="action-status">
                 <option value="">(Без изменений)</option>
-                \${this.state.statuses.map(s => \`<option value="\${s.id}">\${escapeHtml(s.name)}</option>\`).join('')}
+                ${this.state.statuses.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
               </select>
             </div>
 
             <div class="action-buttons">
-              <button class="btn btn-primary btn-block" id="btn-apply-actions" \${this.state.selectedTaskIds.size === 0 ? 'disabled' : ''}>
+              <button class="btn btn-primary btn-block" id="btn-apply-actions" ${this.state.selectedTaskIds.size === 0 ? 'disabled' : ''}>
                 Применить
               </button>
-              <button class="btn btn-danger btn-block" id="btn-delete-tasks" \${this.state.selectedTaskIds.size === 0 ? 'disabled' : ''}>
+              <button class="btn btn-danger btn-block" id="btn-delete-tasks" ${this.state.selectedTaskIds.size === 0 ? 'disabled' : ''}>
                 Удалить выбранные
               </button>
             </div>
@@ -195,7 +195,7 @@ export class InboxProcessing extends Dialog<InboxProcessingState> {
         for (const id of this.state.selectedTaskIds) {
           await api.updateTask(id, updates);
         }
-        showSuccess(\`Обработано задач: \${this.state.selectedTaskIds.size}\`);
+        showSuccess(`Обработано задач: ${this.state.selectedTaskIds.size}`);
         
         // Refresh view
         const refreshEvent = new CustomEvent('pomodoro-tms:refresh-view');
@@ -213,7 +213,7 @@ export class InboxProcessing extends Dialog<InboxProcessingState> {
     this.element.querySelector('#btn-delete-tasks')?.addEventListener('click', async () => {
       if (this.state.selectedTaskIds.size === 0) return;
 
-      if (confirm(\`Удалить \${this.state.selectedTaskIds.size} задач навсегда?\`)) {
+      if (confirm(`Удалить ${this.state.selectedTaskIds.size} задач навсегда?`)) {
         try {
           for (const id of this.state.selectedTaskIds) {
             await api.deleteTask(id);

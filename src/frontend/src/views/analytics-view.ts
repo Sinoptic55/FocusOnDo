@@ -97,22 +97,22 @@ export class AnalyticsView extends Component<AnalyticsViewState> {
             <button class="btn btn-sm preset-btn active" data-preset="month">Месяц</button>
           </div>
           <div class="date-inputs">
-            <input type="date" id="start-date" value="\${this.state.startDate}">
+            <input type="date" id="start-date" value="${this.state.startDate}">
             <span>—</span>
-            <input type="date" id="end-date" value="\${this.state.endDate}">
+            <input type="date" id="end-date" value="${this.state.endDate}">
             <button class="btn btn-primary btn-sm" id="apply-dates">Применить</button>
           </div>
         </div>
       </div>
 
       <div class="report-tabs mt-md mb-md">
-        <button class="btn \${this.state.activeReport === 'dashboard' ? 'btn-primary' : 'btn-secondary'}" data-report="dashboard">Обзор</button>
-        <button class="btn \${this.state.activeReport === 'projects' ? 'btn-primary' : 'btn-secondary'}" data-report="projects">Проекты</button>
-        <button class="btn \${this.state.activeReport === 'clients' ? 'btn-primary' : 'btn-secondary'}" data-report="clients">Клиенты</button>
-        <button class="btn \${this.state.activeReport === 'productivity' ? 'btn-primary' : 'btn-secondary'}" data-report="productivity">Пики продуктивности</button>
-        <button class="btn \${this.state.activeReport === 'estimation' ? 'btn-primary' : 'btn-secondary'}" data-report="estimation">Оценки</button>
-        <button class="btn \${this.state.activeReport === 'speed' ? 'btn-primary' : 'btn-secondary'}" data-report="speed">Скорость работы</button>
-        <button class="btn \${this.state.activeReport === 'stuck' ? 'btn-primary' : 'btn-secondary'}" data-report="stuck">Застревания</button>
+        <button class="btn ${this.state.activeReport === 'dashboard' ? 'btn-primary' : 'btn-secondary'}" data-report="dashboard">Обзор</button>
+        <button class="btn ${this.state.activeReport === 'projects' ? 'btn-primary' : 'btn-secondary'}" data-report="projects">Проекты</button>
+        <button class="btn ${this.state.activeReport === 'clients' ? 'btn-primary' : 'btn-secondary'}" data-report="clients">Клиенты</button>
+        <button class="btn ${this.state.activeReport === 'productivity' ? 'btn-primary' : 'btn-secondary'}" data-report="productivity">Пики продуктивности</button>
+        <button class="btn ${this.state.activeReport === 'estimation' ? 'btn-primary' : 'btn-secondary'}" data-report="estimation">Оценки</button>
+        <button class="btn ${this.state.activeReport === 'speed' ? 'btn-primary' : 'btn-secondary'}" data-report="speed">Скорость работы</button>
+        <button class="btn ${this.state.activeReport === 'stuck' ? 'btn-primary' : 'btn-secondary'}" data-report="stuck">Застревания</button>
       </div>
 
       <div id="report-content" class="report-content"></div>
