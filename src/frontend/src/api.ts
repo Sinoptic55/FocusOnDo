@@ -170,6 +170,13 @@ export class ApiService {
     });
   }
 
+  async reorderTasks(items: Array<{task_id: number, sort_order: number}>): Promise<void> {
+    await this.request<void>('/api/tasks/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({ items }),
+    });
+  }
+
   // Lists
   async getLists(): Promise<TaskList[]> {
     return this.request<TaskList[]>('/api/lists');

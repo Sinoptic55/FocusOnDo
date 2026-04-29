@@ -12,7 +12,7 @@ from models.task import Task
 from models.time_segment import TimeSegment
 from models.recurring_task import RecurringTask
 from models.task_status import TaskStatus
-from schemas.task import TaskCreate, TaskUpdate, TaskResponse, TaskQuickCreate
+from schemas.task import TaskCreate, TaskUpdate, TaskResponse, TaskQuickCreate, ReorderRequest
 from schemas.recurring import RecurringTaskCreate, RecurringTaskResponse
 from auth.dependencies import get_current_user
 from models.user import User
@@ -98,7 +98,7 @@ async def get_tasks(
     if client_id is not None:
         query = query.where(Task.client_id == client_id)
 
-    result = await db.execute(query.order_by(Task.created_at.desc()))
+    result = await db.execute(query.order_by(Task.sort_order.asc(), Task.created_at.desc()))
     tasks = result.scalars().all()
 
     # Calculate total time for each task
@@ -109,6 +109,41 @@ async def get_tasks(
         task_responses.append(TaskResponse.model_validate(task))
 
     return task_responses
+
+
+@router.patch("/reorder", status_code=status.HTTP_200_OK)
+async def reorder_tasks(
+    request: ReorderRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Batch update task sort_order.
+    """
+    if not request.items:
+        return {"message": "No items to reorder"}
+        
+    task_ids = [item.task_id for item in request.items]
+    
+    result = await db.execute(
+        select(Task).where(Task.id.in_(task_ids), Task.user_id == current_user.id)
+    )
+    tasks = result.scalars().all()
+    
+    if len(tasks) != len(task_ids):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="One or more tasks not found or access denied"
+        )
+        
+    task_map = {task.id: task for task in tasks}
+    
+    for item in request.items:
+        task_map[item.task_id].sort_order = item.sort_order
+        
+    await db.commit()
+    
+    return {"message": "Tasks reordered successfully"}
 
 
 @router.get("/{task_id}", response_model=TaskResponse)

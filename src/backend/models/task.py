@@ -30,6 +30,7 @@ class Task(Base):
     external_link = Column(String(500), nullable=True)  # Link to external task/ticket
     is_completed = Column(Boolean, default=False, nullable=False, server_default='false')
     is_paid = Column(Boolean, default=False, nullable=False, server_default='false')
+    sort_order = Column(Integer, default=0, nullable=False, server_default='0')
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

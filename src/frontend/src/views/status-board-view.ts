@@ -182,7 +182,14 @@ export class StatusBoardView extends Component<StatusBoardViewState, StatusBoard
 
   private sortTasks(tasks: Task[]): Task[] {
     const sorted = [...tasks];
-    if (this.state.sortBy === 'deadline') {
+    if (this.state.sortBy === 'none') {
+      sorted.sort((a, b) => {
+        if (a.sort_order !== b.sort_order) {
+           return a.sort_order - b.sort_order;
+        }
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    } else if (this.state.sortBy === 'deadline') {
       sorted.sort((a, b) => {
         if (!a.deadline) return 1;
         if (!b.deadline) return -1;
@@ -194,41 +201,114 @@ export class StatusBoardView extends Component<StatusBoardViewState, StatusBoard
     return sorted;
   }
 
+  private getDragAfterElement(container: Element, y: number): Element | null {
+    const draggableElements = [...container.querySelectorAll('.draggable-task:not(.dragging)')];
+    
+    return draggableElements.reduce((closest: { offset: number, element: Element | null }, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  }
+
   private setupDragAndDrop(): void {
     const zones = this.element.querySelectorAll('.column-content');
     
     zones.forEach(zone => {
-      zone.addEventListener('dragover', (e) => {
+      zone.addEventListener('dragover', (e: Event) => {
         e.preventDefault();
-        zone.classList.add('drag-over');
-      });
-
-      zone.addEventListener('dragleave', () => {
-        zone.classList.remove('drag-over');
-      });
-
-      zone.addEventListener('drop', async (e: any) => {
-        e.preventDefault();
-        zone.classList.remove('drag-over');
+        const dragEvent = e as DragEvent;
         
-        const taskId = parseInt(e.dataTransfer.getData('text/plain'));
+        zone.querySelectorAll('.drop-indicator-before, .drop-indicator-after').forEach(el => {
+          el.classList.remove('drop-indicator-before', 'drop-indicator-after');
+        });
+        
+        const afterElement = this.getDragAfterElement(zone, dragEvent.clientY);
+        if (afterElement) {
+          afterElement.classList.add('drop-indicator-before');
+        } else {
+          const lastChild = zone.lastElementChild;
+          if (lastChild && !lastChild.classList.contains('dragging')) {
+            lastChild.classList.add('drop-indicator-after');
+          }
+        }
+      });
+
+      zone.addEventListener('dragleave', (e: Event) => {
+        const dragEvent = e as DragEvent;
+        if (!zone.contains(dragEvent.relatedTarget as Node)) {
+          zone.querySelectorAll('.drop-indicator-before, .drop-indicator-after').forEach(el => {
+            el.classList.remove('drop-indicator-before', 'drop-indicator-after');
+          });
+        }
+      });
+
+      zone.addEventListener('drop', async (e: Event) => {
+        e.preventDefault();
+        const dragEvent = e as DragEvent;
+        
+        zone.querySelectorAll('.drop-indicator-before, .drop-indicator-after').forEach(el => {
+          el.classList.remove('drop-indicator-before', 'drop-indicator-after');
+        });
+        
+        const taskId = parseInt(dragEvent.dataTransfer?.getData('text/plain') || '0');
         if (!taskId) return;
 
         const targetStatusId = parseInt((zone as HTMLElement).dataset.dropZone || '0');
         if (targetStatusId) {
-          await this.handleTaskDrop(taskId, targetStatusId);
+          const afterElement = this.getDragAfterElement(zone, dragEvent.clientY);
+          await this.handleTaskDrop(taskId, targetStatusId, afterElement as HTMLElement | null);
         }
       });
     });
   }
 
-  private async handleTaskDrop(taskId: number, statusId: number): Promise<void> {
+  private async handleTaskDrop(taskId: number, statusId: number, afterElement: HTMLElement | null = null): Promise<void> {
     const task = this.state.tasks.find(t => t.id === taskId);
-    if (!task || task.status_id === statusId) return;
+    if (!task) return;
+
+    let columnChanged = false;
+    if (task.status_id !== statusId) {
+      columnChanged = true;
+    }
+
+    const zone = this.element.querySelector(`.column-content[data-drop-zone="${statusId}"]`);
+    let reorderItems: Array<{task_id: number, sort_order: number}> = [];
+    if (zone && this.state.sortBy === 'none') {
+      const taskElements = Array.from(zone.querySelectorAll('.draggable-task'));
+      const taskIdsInColumn = taskElements
+        .map(el => parseInt((el as HTMLElement).dataset.taskId || '0'))
+        .filter(id => id !== taskId);
+        
+      if (afterElement) {
+        const afterId = parseInt(afterElement.dataset.taskId || '0');
+        const insertIndex = taskIdsInColumn.indexOf(afterId);
+        if (insertIndex !== -1) {
+          taskIdsInColumn.splice(insertIndex, 0, taskId);
+        } else {
+          taskIdsInColumn.push(taskId);
+        }
+      } else {
+        taskIdsInColumn.push(taskId);
+      }
+      
+      reorderItems = taskIdsInColumn.map((id, index) => ({ task_id: id, sort_order: index }));
+    }
 
     try {
-      await api.updateTask(taskId, { status_id: statusId });
-      await this.loadData();
+      if (columnChanged) {
+        await api.updateTask(taskId, { status_id: statusId });
+      }
+      if (reorderItems.length > 0) {
+        await api.reorderTasks(reorderItems);
+      }
+      if (columnChanged || reorderItems.length > 0) {
+        await this.loadData();
+      }
     } catch (error) {
       console.error('Failed to move task status:', error);
     }

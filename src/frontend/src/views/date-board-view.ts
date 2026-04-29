@@ -244,7 +244,14 @@ export class DateBoardView extends Component<DateBoardViewState, DateBoardViewPr
 
   private sortTasks(tasks: Task[]): Task[] {
     const sorted = [...tasks];
-    if (this.state.sortBy === 'deadline') {
+    if (this.state.sortBy === 'none') {
+      sorted.sort((a, b) => {
+        if (a.sort_order !== b.sort_order) {
+           return a.sort_order - b.sort_order;
+        }
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    } else if (this.state.sortBy === 'deadline') {
       sorted.sort((a, b) => {
         if (!a.deadline) return 1;
         if (!b.deadline) return -1;
@@ -256,67 +263,141 @@ export class DateBoardView extends Component<DateBoardViewState, DateBoardViewPr
     return sorted;
   }
 
+  private getDragAfterElement(container: Element, y: number): Element | null {
+    const draggableElements = [...container.querySelectorAll('.draggable-task:not(.dragging)')];
+    
+    return draggableElements.reduce((closest: { offset: number, element: Element | null }, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  }
+
   private setupDragAndDrop(): void {
     const zones = this.element.querySelectorAll('.column-content');
     
     zones.forEach(zone => {
-      zone.addEventListener('dragover', (e) => {
+      zone.addEventListener('dragover', (e: Event) => {
         e.preventDefault();
-        zone.classList.add('drag-over');
-      });
-
-      zone.addEventListener('dragleave', () => {
-        zone.classList.remove('drag-over');
-      });
-
-      zone.addEventListener('drop', async (e: any) => {
-        e.preventDefault();
-        zone.classList.remove('drag-over');
+        const dragEvent = e as DragEvent;
         
-        const taskId = parseInt(e.dataTransfer.getData('text/plain'));
+        zone.querySelectorAll('.drop-indicator-before, .drop-indicator-after').forEach(el => {
+          el.classList.remove('drop-indicator-before', 'drop-indicator-after');
+        });
+        
+        const afterElement = this.getDragAfterElement(zone, dragEvent.clientY);
+        if (afterElement) {
+          afterElement.classList.add('drop-indicator-before');
+        } else {
+          const lastChild = zone.lastElementChild;
+          if (lastChild && !lastChild.classList.contains('dragging')) {
+            lastChild.classList.add('drop-indicator-after');
+          }
+        }
+      });
+
+      zone.addEventListener('dragleave', (e: Event) => {
+        const dragEvent = e as DragEvent;
+        if (!zone.contains(dragEvent.relatedTarget as Node)) {
+          zone.querySelectorAll('.drop-indicator-before, .drop-indicator-after').forEach(el => {
+            el.classList.remove('drop-indicator-before', 'drop-indicator-after');
+          });
+        }
+      });
+
+      zone.addEventListener('drop', async (e: Event) => {
+        e.preventDefault();
+        const dragEvent = e as DragEvent;
+        
+        zone.querySelectorAll('.drop-indicator-before, .drop-indicator-after').forEach(el => {
+          el.classList.remove('drop-indicator-before', 'drop-indicator-after');
+        });
+        
+        const taskId = parseInt(dragEvent.dataTransfer?.getData('text/plain') || '0');
         if (!taskId) return;
 
         const targetColumn = (zone as HTMLElement).dataset.dropZone;
-        await this.handleTaskDrop(taskId, targetColumn || 'no-date');
+        const afterElement = this.getDragAfterElement(zone, dragEvent.clientY);
+        
+        await this.handleTaskDrop(taskId, targetColumn || 'no-date', afterElement as HTMLElement | null);
       });
     });
   }
 
-  private async handleTaskDrop(taskId: number, column: string): Promise<void> {
+  private async handleTaskDrop(taskId: number, column: string, afterElement: HTMLElement | null = null): Promise<void> {
     const task = this.state.tasks.find(t => t.id === taskId);
     if (!task) return;
 
-    let newDate: string | null = null;
-    const today = new Date();
+    let newDate = task.planned_date;
+    let columnChanged = false;
     
-    switch (column) {
-      case 'today':
-      case 'overdue': // Dropping into overdue just means today practically
-        newDate = today.toISOString();
-        break;
-      case 'tomorrow':
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        newDate = tomorrow.toISOString();
-        break;
-      case 'this-week':
-        const endOfWeek = new Date(today);
-        endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
-        newDate = endOfWeek.toISOString();
-        break;
-      case 'later':
-        const later = new Date(today);
-        later.setDate(today.getDate() + 14); // Arbitrary later date
-        newDate = later.toISOString();
-        break;
-      case 'no-date':
-        newDate = null;
-        break;
+    const currentGroup = this.getGroupForTask(task);
+    if (currentGroup !== column) {
+      columnChanged = true;
+      const today = new Date();
+      switch (column) {
+        case 'today':
+        case 'overdue': // Dropping into overdue just means today practically
+          newDate = today.toISOString();
+          break;
+        case 'tomorrow':
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          newDate = tomorrow.toISOString();
+          break;
+        case 'this-week':
+          const endOfWeek = new Date(today);
+          endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
+          newDate = endOfWeek.toISOString();
+          break;
+        case 'later':
+          const later = new Date(today);
+          later.setDate(today.getDate() + 14); // Arbitrary later date
+          newDate = later.toISOString();
+          break;
+        case 'no-date':
+          newDate = null;
+          break;
+      }
+    }
+
+    const zone = this.element.querySelector(`.column-content[data-drop-zone="${column}"]`);
+    let reorderItems: Array<{task_id: number, sort_order: number}> = [];
+    if (zone && this.state.sortBy === 'none') {
+      const taskElements = Array.from(zone.querySelectorAll('.draggable-task'));
+      const taskIdsInColumn = taskElements
+        .map(el => parseInt((el as HTMLElement).dataset.taskId || '0'))
+        .filter(id => id !== taskId);
+        
+      if (afterElement) {
+        const afterId = parseInt(afterElement.dataset.taskId || '0');
+        const insertIndex = taskIdsInColumn.indexOf(afterId);
+        if (insertIndex !== -1) {
+          taskIdsInColumn.splice(insertIndex, 0, taskId);
+        } else {
+          taskIdsInColumn.push(taskId);
+        }
+      } else {
+        taskIdsInColumn.push(taskId);
+      }
+      
+      reorderItems = taskIdsInColumn.map((id, index) => ({ task_id: id, sort_order: index }));
     }
 
     try {
-      await api.updateTask(taskId, { planned_date: newDate || undefined });
-      await this.loadData();
+      if (columnChanged) {
+        await api.updateTask(taskId, { planned_date: newDate === null ? (null as any) : newDate }); // handle null explicitly
+      }
+      if (reorderItems.length > 0) {
+        await api.reorderTasks(reorderItems);
+      }
+      if (columnChanged || reorderItems.length > 0) {
+        await this.loadData();
+      }
     } catch (error) {
       console.error('Failed to move task:', error);
     }

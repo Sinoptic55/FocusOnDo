@@ -26,6 +26,7 @@ export interface Task {
   external_link: string | null;
   is_completed: boolean;
   is_paid: boolean;
+  sort_order: number;
   created_at: string;
   updated_at: string;
   total_time: number;

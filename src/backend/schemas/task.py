@@ -22,6 +22,7 @@ class TaskBase(BaseModel):
     parent_task_id: Optional[int] = None
     is_completed: bool = False
     is_paid: bool = False
+    sort_order: int = 0
 
 
 class TaskCreate(TaskBase):
@@ -45,6 +46,7 @@ class TaskUpdate(BaseModel):
     parent_task_id: Optional[int] = None
     is_completed: Optional[bool] = None
     is_paid: Optional[bool] = None
+    sort_order: Optional[int] = None
 
 
 class TaskResponse(TaskBase):
@@ -63,3 +65,14 @@ class TaskQuickCreate(BaseModel):
     """Schema for quick task creation (Inbox capture)."""
     title: str = Field(..., min_length=1, max_length=200)
     list_id: Optional[int] = None
+
+
+class ReorderItem(BaseModel):
+    """Schema for a single task order update."""
+    task_id: int
+    sort_order: int
+
+
+class ReorderRequest(BaseModel):
+    """Schema for batch task reordering."""
+    items: list[ReorderItem]

@@ -1786,6 +1786,14 @@ kbd {
   background-color: rgba(79, 70, 229, 0.05);
 }
 
+.drop-indicator-before {
+  border-top: 3px solid var(--color-primary) !important;
+}
+
+.drop-indicator-after {
+  border-bottom: 3px solid var(--color-primary) !important;
+}
+
 /* ============================================
    Dialogs / Modals
    ============================================ */
